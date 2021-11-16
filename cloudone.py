@@ -39,7 +39,7 @@ def c1DescribeApiKey(http, httpHeaders, apiKeyId):
         raise Exception('Error: Invalid response')
 
 # Returns True if Cloud One licenses are valid for the duration of the event.
-def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):    
+def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):
 
     c1CheckServicesStatusResponse = json.loads(http.request('GET', c1ServicesApiEndpointBaseUrl(c1TrendRegion) + "/services", headers=httpHeaders).data)
 
