@@ -15,7 +15,7 @@ def c1AccountsApiEndpointBaseUrl():
 # Returns Cloud One region-based Services API Endpoint URL.
 def c1ServicesApiEndpointBaseUrl(c1TrendRegion):
     
-    return "https://services." + c1TrendRegion + ".cloudone.trendmicro.com/api"
+    return "https://services." + str(c1TrendRegion) + ".cloudone.trendmicro.com/api"
 
 # Retrieve API Key ID from the raw API Key passed to this function.
 def parseApiKeyForKeyId(rawApiKey):
@@ -39,9 +39,7 @@ def c1DescribeApiKey(http, httpHeaders, apiKeyId):
         raise Exception('Error: Invalid response')
 
 # Returns True if Cloud One licenses are valid for the duration of the event.
-def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):
-
-    serviceStatusList = []
+def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):    
 
     c1CheckServicesStatusResponse = json.loads(http.request('GET', c1ServicesApiEndpointBaseUrl(c1TrendRegion) + "/services", headers=httpHeaders).data)
 
@@ -54,15 +52,21 @@ def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):
 
                 raise Exception('Expired license for ' + service["name"] + ". Unable to proceed with this license.")
 
+            else:
+                print("License for", service["name"], "- Valid")
+
         # Check if the licenses are expiring during the duration of the TDC.
         elif "expires" in service:
         
             if (datetime.strptime(service["expires"], '%Y-%m-%dT%H:%M:%SZ') - datetime.now()).days <= 3:
 
                 raise Exception('License expiry imminent for ' + service["name"] + ". Unable to proceed with this license status.")
+
+            else:
+                print("License for", service["name"], "- Valid")
         
         else:
-            print("License", service["name"], "- Valid")
+            print("License for", service["name"], "- Valid")
 
     return True
 
@@ -96,7 +100,7 @@ def c1InvitePlayer(http, httpHeaders, emailId, c1Role):
 # Verify Users exist in the Cloud One account
 def c1VerifyUsers(http, httpHeaders, c1UsersList):
 
-    c1UsersResponse = json.loads(http.request('GET', c1ServicesApiEndpointBaseUrl(c1TrendRegion) + "/users", headers=httpHeaders).data)
+    c1UsersResponse = json.loads(http.request('GET', c1AccountsApiEndpointBaseUrl() + "/users", headers=httpHeaders).data)
 
     for user in c1UsersResponse["users"]:
 
