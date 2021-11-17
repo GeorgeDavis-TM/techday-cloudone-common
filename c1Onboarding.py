@@ -39,7 +39,7 @@ def c1DescribeApiKey(http, httpHeaders, apiKeyId):
         raise Exception('Error: Invalid response')
 
 # Returns True if Cloud One licenses are valid for the duration of the event.
-def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):
+def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion, c1LicenseValidationDayCount):
 
     c1CheckServicesStatusResponse = json.loads(http.request('GET', c1ServicesApiEndpointBaseUrl(c1TrendRegion) + "/services", headers=httpHeaders).data)
 
@@ -58,7 +58,7 @@ def c1CheckServicesStatus(http, httpHeaders, c1TrendRegion):
         # Check if the licenses are expiring during the duration of the TDC.
         elif "expires" in service:
         
-            if (datetime.strptime(service["expires"], '%Y-%m-%dT%H:%M:%SZ') - datetime.now()).days <= 3:
+            if (datetime.strptime(service["expires"], '%Y-%m-%dT%H:%M:%SZ') - datetime.now()).days <= c1LicenseValidationDayCount:
 
                 raise Exception('License expiry imminent for ' + service["name"] + ". Unable to proceed with this license status.")
 
@@ -102,15 +102,21 @@ def c1VerifyUsers(http, httpHeaders, c1UsersList):
 
     c1UsersResponse = json.loads(http.request('GET', c1AccountsApiEndpointBaseUrl() + "/users", headers=httpHeaders).data)
 
+    c1UsersDict = {}
+    
     for user in c1UsersResponse["users"]:
 
-        if user["email"] not in c1UsersList:
+        c1UsersDict.update({user["email"]: user["state"]})
 
-            raise Exception('Error: User not found in the Cloud One Account')
+    for user in c1UsersList:
 
-        elif "enabled" not in user["state"]:
+        if user not in c1UsersDict.keys():
 
-            raise Exception('Error: User is disabled in the Cloud One Account')
+            raise Exception('Error: User "' + str(user) + '" not found in the Cloud One Account')
+
+        elif "enabled" not in c1UsersDict[user]:
+
+            raise Exception('Error: User "' + str(user) + '" is disabled in the Cloud One Account')
 
     return True
 
@@ -134,10 +140,11 @@ def main(event, context):
     awsRegion = str(os.environ.get("awsRegion"))
     c1ApiKey = str(os.environ.get("c1ApiKey"))
     c1UsersList = str(os.environ.get("c1UsersList")).split(",")
+    c1LicenseValidationDayCount = int(os.environ.get("c1LicenseValidationDayCount"))
 
-    # # Invite Player with Role logic
-    # c1FullAccessPlayerEmailList = str(os.environ.get("c1FullAccessPlayerEmails")).split(",")
-    # c1ReadOnlyPlayerEmailList = str(os.environ.get("c1ReadOnlyPlayerEmails")).split(",")
+    # # Invite Player with Role logic.
+    c1FullAccessPlayerEmailList = str(os.environ.get("c1FullAccessPlayerEmails")).split(",")
+    c1ReadOnlyPlayerEmailList = str(os.environ.get("c1ReadOnlyPlayerEmails")).split(",")
 
     http = urllib3.PoolManager()
 
@@ -154,51 +161,52 @@ def main(event, context):
     # Creating an SSM Client to store values in the AWS SSM Parameter Store.
     ssmClient = boto3.client('ssm', region_name=awsRegion)
 
-    # If valid response for Cloud One API call, store Account ID and API Key in AWS SSM Parameter Store for future use.
-    if c1AccountId:
+    # If Account ID and Trend region are none, raise exception, else go ahead.
+    if not c1AccountId and not c1TrendRegion:
+
+        raise Exception('Error: Invalid Cloud One Account ID or Region. Please contact organizer.')
+
+    # If valid Account Id and Trend region, store those values in AWS SSM Parameter Store for future use.
+    else:
 
         print("Cloud One Account Id - " + str(c1AccountId))
 
-        # Stores global Trend C1 Account ID as an SSM Parameter  "c1AccountId"
+        # Stores global Trend C1 Account ID as an SSM Parameter  "c1AccountId".
         setC1SsmParameter(ssmClient, "c1AccountId", c1AccountId)
 
-        # Stores global Trend C1 API Key as an SSM Parameter  "c1ApiKey"
+        # Stores global Trend C1 API Key as an SSM Parameter  "c1ApiKey".
         setC1SsmParameter(ssmClient, "c1ApiKey", c1ApiKey)
-
-    # If valid response for Cloud One API call, store Trend Region info in AWS SSM Parameter Store for future use.
-    if c1TrendRegion:
 
         print("Trend Region - " + str(c1TrendRegion))
 
-        # Stores Trend hosted Cloud One Region Identifier
+        # Stores Trend hosted Cloud One Region Identifier.
         setC1SsmParameter(ssmClient, "c1Region", c1TrendRegion)
 
-        # Stores global Trend C1 Accounts API Base URL as an SSM Parameter  "c1AccountsApiBaseUrl"
+        # Stores global Trend C1 Accounts API Base URL as an SSM Parameter  "c1AccountsApiBaseUrl".
         setC1SsmParameter(ssmClient, "c1AccountsApiBaseUrl", c1AccountsApiEndpointBaseUrl())
 
-        # Stores region specific Trend C1 Services API Base URL as an SSM Parameter  "c1ServicesApiBaseUrl"
+        # Stores region specific Trend C1 Services API Base URL as an SSM Parameter  "c1ServicesApiBaseUrl".
         setC1SsmParameter(ssmClient, "c1ServicesApiBaseUrl", c1ServicesApiEndpointBaseUrl(c1TrendRegion))
 
         # Check if all Cloud One services are licensed for the duration of the TDC.
-        if c1CheckServicesStatus(http, headers, c1TrendRegion):
+        if c1CheckServicesStatus(http, headers, c1TrendRegion, c1LicenseValidationDayCount):
 
             print("All Services are Go!!!")
 
-            # Verify if all users exist in the Cloud One account, raises exception if any one user fails
+            # # Invite player with Full-Access role onto the Cloud One account.
+            # for playerEmail in c1FullAccessPlayerEmailList:
+
+            #     c1InvitePlayer(http, headers, playerEmail, "full-access")
+
+            # # Invite player with Read-Only role onto the Cloud One account.
+            # for playerEmail in c1ReadOnlyPlayerEmailList:
+                
+            #     c1InvitePlayer(http, headers, playerEmail, "read-only")
+
+            # Verify if all users exist in the Cloud One account, raises exception if any one user fails.
             if c1VerifyUsers(http, headers, c1UsersList):
                 
                 print("Success: User(s) exist in the Cloud One account")
 
-            else:
-                raise Exception('Error: User(s) do not exist as part of the Cloud One account')
-
-    # # Invite player with Full-Access role onto the Cloud One account.
-    # for playerEmail in c1FullAccessPlayerEmailList:
-
-    #     c1InvitePlayer(http, headers, playerEmail, "full-access")
-
-    # # Invite player with Read-Only role onto the Cloud One account.
-    # for playerEmail in c1ReadOnlyPlayerEmailList:
-        
-    #     c1InvitePlayer(http, headers, playerEmail, "read-only")
-
+                # Stores onboarding success as an SSM Parameter "c1Onboarding" for Mission Control verification.
+                setC1SsmParameter(ssmClient, "c1Onboarding", "Success")

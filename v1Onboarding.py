@@ -66,20 +66,29 @@ def v1InvitePlayer(http, httpHeaders, v1TrendRegion, emailId, v1Role):
         else:
             raise Exception('Error: Invitation unsuccessful.')
 
-# Verify User Accounts exist in the Vision One account
+# Verify User Accounts exist in the Vision One account.
 def v1VerifyUserAccounts(http, httpHeaders, v1TrendRegion, v1UsersList):
 
     v1UserAccountsResponse = json.loads(http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion)  + "/accounts", headers=httpHeaders).data)
-
+    
+    v1UserAccountsDict = {}
+    
     for userAccount in v1UserAccountsResponse["data"]["items"]:
 
-        if userAccount["email"] not in v1UsersList:
+        v1UserAccountsDict.update({userAccount["email"]: userAccount["enabled"]})
 
-            raise Exception('Error: User account not found in the Vision One Account')
+    for user in v1UsersList:
 
-        elif not userAccount["enabled"]:
+        if user not in v1UserAccountsDict.keys():
 
-            raise Exception('Error: User account is disabled in the Vision One Account')
+            raise Exception('Error: User account "' + str(user) + '" not found in the Vision One Account')
+
+        elif not v1UserAccountsDict[user]:
+
+            raise Exception('Error: User account "' + str(user) + '" is disabled in the Vision One Account')
+
+        else:
+            print("Success: User '" + str(user) + "' exists in the Vision One account")            
 
     return True
 
@@ -103,9 +112,9 @@ def main(event, context):
     awsRegion = str(os.environ.get("awsRegion"))
     v1TrendRegion = str(os.environ.get("v1TrendRegion"))    
     v1AuthToken = str(os.environ.get("v1AuthToken"))
-    v1UsersList = str(os.environ.get("v1UsersList"))
+    v1UsersList = str(os.environ.get("v1UsersList")).split(",")
 
-    # # Invite Player with Role logic
+    # # Invite Player with Role logic.
     # v1MasterAdminPlayerEmailList = str(os.environ.get("v1MasterAdminPlayerEmails")).split(",")
 
     http = urllib3.PoolManager()
@@ -116,36 +125,38 @@ def main(event, context):
         "Authorization": "Bearer " + v1AuthToken
     }
 
-    if v1TrendRegion in v1SupportedRegions:
+    # If v1TrendRegion is not in the supported regions list, raise exception, else go ahead and verify V1 Auth Token.
+    if v1TrendRegion not in v1SupportedRegions:
 
-        # If returns True for Vision One API call, store API Key in AWS SSM Parameter Store for future use.
+        raise Exception('Error: Invalid Vision One Region')
+
+    else:
+
+        # If v1VerifyAuthToken returns True for Vision One API call, store API Key in AWS SSM Parameter Store for future use.
         if v1VerifyAuthToken(http, headers, v1TrendRegion):
 
             print("Trend Region - " + str(v1TrendRegion))
+
             print("Vision One APIs are a Go!!!")
 
             # Creating an SSM Client to store values in the AWS SSM Parameter Store.
             ssmClient = boto3.client('ssm', region_name=awsRegion)
         
-            # Stores global Trend V1 API Base URL as an SSM Parameter  "v1ApiBaseUrl"
+            # Stores global Trend V1 API Base URL as an SSM Parameter  "v1ApiBaseUrl".
             setV1SsmParameter(ssmClient, "v1ApiBaseUrl", v1ApiEndpointBaseUrl(v1TrendRegion))
 
-            # Stores global Trend V1 API Key as an SSM Parameter  "v1ApiKey"
+            # Stores global Trend V1 API Key as an SSM Parameter  "v1ApiKey".
             setV1SsmParameter(ssmClient, "v1ApiKey", v1AuthToken)
-
-            # Verify if all users exist in the Vision One account, raises exception if any one user fails
-            if v1VerifyUserAccounts(http, headers, v1TrendRegion, v1UsersList):
-                
-                print("Success: User(s) exist in the Vision One account")
-
-            else:
-                raise Exception('Error: User(s) exists as part of the Vision One account')
-
 
             # # Invite player with Master Administrator role onto the Vision One account.
             # for playerEmail in v1MasterAdminPlayerEmailList:
 
             #     v1InvitePlayer(http, headers, v1TrendRegion, playerEmail, "Master Administrator")
-            
-    else:
-        raise Exception('Error: Invalid Vision One Region')
+
+            # Verify if all users exist in the Vision One account, raises exception if any one user fails.
+            if v1VerifyUserAccounts(http, headers, v1TrendRegion, v1UsersList):
+                
+                print("Success: User(s) exist in the Vision One account")
+
+                # Stores onboarding success as an SSM Parameter "v1Onboarding" for Mission Control verification.
+                setV1SsmParameter(ssmClient, "v1Onboarding", "Success")           
