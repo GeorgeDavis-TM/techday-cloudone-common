@@ -209,4 +209,4 @@ def main(event, context):
                 print("Success: User(s) exist in the Cloud One account")
 
                 # Stores onboarding success as an SSM Parameter "c1Onboarding" for Mission Control verification.
-                setC1SsmParameter(ssmClient, "c1Onboarding", "Success")
+                setC1SsmParameter(ssmClient, "c1OnboardingStatus", "Success")

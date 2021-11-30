@@ -159,4 +159,4 @@ def main(event, context):
                 print("Success: User(s) exist in the Vision One account")
 
                 # Stores onboarding success as an SSM Parameter "v1Onboarding" for Mission Control verification.
-                setV1SsmParameter(ssmClient, "v1Onboarding", "Success")           
+                setV1SsmParameter(ssmClient, "v1OnboardingStatus", "Success")           
