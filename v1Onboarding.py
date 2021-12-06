@@ -23,9 +23,20 @@ def v1ApiEndpointBaseUrl(v1TrendRegion):
     return "https://" + v1ApiEndpointBaseUrls[v1TrendRegion] + "/beta/xdr/portal"
 
 # Validates the Vision One Auth token passed to this function by listing roles in the Vision One account, returns True if success, otherwise False.
-def v1VerifyAuthToken(http, httpHeaders, v1TrendRegion):
+def v1VerifyAuthToken(ssmClient, http, httpHeaders, v1TrendRegion):
 
-    v1ListAccountsResponse = json.loads(http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion) + "/accounts/roles", headers=httpHeaders).data)    
+    r = http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion) + "/accounts/roles", headers=httpHeaders)
+
+    v1ListAccountsResponse = json.loads(r.data)
+    
+    responseHeadersList = r.getheaders()
+
+    if responseHeadersList:
+        
+        if "TMV1-Customer-ID" in responseHeadersList.keys():
+
+            # Stores global Trend V1 Customer ID as an SSM Parameter  "v1CustomerId", from HTTP Response headers.
+            setV1SsmParameter(ssmClient, "v1CustomerId", responseHeadersList["TMV1-Customer-ID"])
 
     if "code" in v1ListAccountsResponse:
 
@@ -132,16 +143,16 @@ def main(event, context):
 
     else:
 
+        # Creating an SSM Client to store values in the AWS SSM Parameter Store.
+        ssmClient = boto3.client('ssm', region_name=awsRegion)
+
         # If v1VerifyAuthToken returns True for Vision One API call, store API Key in AWS SSM Parameter Store for future use.
-        if v1VerifyAuthToken(http, headers, v1TrendRegion):
+        if v1VerifyAuthToken(ssmClient, http, headers, v1TrendRegion):
 
             print("Trend Region - " + str(v1TrendRegion))
 
             print("Vision One APIs are a Go!!!")
 
-            # Creating an SSM Client to store values in the AWS SSM Parameter Store.
-            ssmClient = boto3.client('ssm', region_name=awsRegion)
-        
             # Stores global Trend V1 API Base URL as an SSM Parameter  "v1ApiBaseUrl".
             setV1SsmParameter(ssmClient, "v1ApiBaseUrl", v1ApiEndpointBaseUrl(v1TrendRegion))
 
