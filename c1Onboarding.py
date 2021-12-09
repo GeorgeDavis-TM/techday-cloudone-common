@@ -143,8 +143,8 @@ def main(event, context):
     c1LicenseValidationDayCount = int(os.environ.get("c1LicenseValidationDayCount"))
 
     # # Invite Player with Role logic.
-    c1FullAccessPlayerEmailList = str(os.environ.get("c1FullAccessPlayerEmails")).split(",")
-    c1ReadOnlyPlayerEmailList = str(os.environ.get("c1ReadOnlyPlayerEmails")).split(",")
+    # c1FullAccessPlayerEmailList = str(os.environ.get("c1FullAccessPlayerEmails")).split(",")
+    # c1ReadOnlyPlayerEmailList = str(os.environ.get("c1ReadOnlyPlayerEmails")).split(",")
 
     http = urllib3.PoolManager()
 
