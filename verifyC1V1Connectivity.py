@@ -80,12 +80,13 @@ def main(event, context):
     awsRegion = str(os.environ.get("awsRegion"))
     v1AuthToken = str(os.environ.get("v1AuthToken"))
     v1ConnectedProductList = str(os.environ.get("v1ConnectedProductList")).split(",")
+    v1ApiBaseUrlSSMKey = os.environ.get("v1ApiBaseUrlSSMKey")
 
     # Creating an SSM Client to store values in the AWS SSM Parameter Store.
     ssmClient = boto3.client('ssm', region_name=awsRegion)
 
     # Get Vision One API Base URL from the AWS SSM Parameter Store.
-    v1ApiBaseUrl = getV1SsmParameter(ssmClient, "/player/V1/v1ApiBaseUrl")
+    v1ApiBaseUrl = getV1SsmParameter(ssmClient, v1ApiBaseUrlSSMKey)
 
     http = urllib3.PoolManager()
 
