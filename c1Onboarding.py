@@ -139,12 +139,28 @@ def main(event, context):
     # Read AWS Lambda Environment variables into the Lambda runtime as variables.
     awsRegion = str(os.environ.get("awsRegion"))
     c1ApiKey = str(os.environ.get("c1ApiKey"))
-    c1UsersList = str(os.environ.get("c1UsersList")).split(",")
+    c1UsersList = str(os.environ.get("c1UsersList"))
     c1LicenseValidationDayCount = int(os.environ.get("c1LicenseValidationDayCount"))
 
+    if c1UsersList[-1] == ",":
+        c1UsersList = c1UsersList[:-1].replace(" ", "").split(",")
+    else:
+        c1UsersList = c1UsersList.replace(" ", "").split(",")
+
     # # Invite Player with Role logic.
-    # c1FullAccessPlayerEmailList = str(os.environ.get("c1FullAccessPlayerEmails")).split(",")
-    # c1ReadOnlyPlayerEmailList = str(os.environ.get("c1ReadOnlyPlayerEmails")).split(",")
+    # c1FullAccessPlayerEmailList = str(os.environ.get("c1FullAccessPlayerEmails"))
+
+    # if c1FullAccessPlayerEmailList[-1] == ",":
+    #     c1FullAccessPlayerEmailList = c1FullAccessPlayerEmailList[:-1].replace(" ", "").split(",")
+    # else:
+    #     c1FullAccessPlayerEmailList = c1FullAccessPlayerEmailList.replace(" ", "").split(",")
+
+    # c1ReadOnlyPlayerEmailList = str(os.environ.get("c1ReadOnlyPlayerEmails"))
+
+    # if c1ReadOnlyPlayerEmailList[-1] == ",":
+    #     c1ReadOnlyPlayerEmailList = c1ReadOnlyPlayerEmailList[:-1].replace(" ", "").split(",")
+    # else:
+    #     c1ReadOnlyPlayerEmailList = c1ReadOnlyPlayerEmailList.replace(" ", "").split(",")
 
     http = urllib3.PoolManager()
 

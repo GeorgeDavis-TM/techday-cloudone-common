@@ -54,7 +54,7 @@ def v1InvitePlayer(http, httpHeaders, v1TrendRegion, emailId, v1Role):
         "type": 0,
         "name": str(emailId),
         "enabled": True,
-        "description": "Account created by API for Tech Day 2022-1.",
+        "description": "Account created by API for Tech Day.",
         "token": "",
         "authorization": 3,
         "role": str(v1Role)
@@ -123,10 +123,20 @@ def main(event, context):
     awsRegion = str(os.environ.get("awsRegion"))
     v1TrendRegion = str(os.environ.get("v1TrendRegion"))    
     v1AuthToken = str(os.environ.get("v1AuthToken"))
-    v1UsersList = str(os.environ.get("v1UsersList")).split(",")
+    v1UsersList = str(os.environ.get("v1UsersList"))
+
+    if v1UsersList[-1] == ",":
+        v1UsersList = v1UsersList[:-1].replace(" ", "").split(",")
+    else:
+        v1UsersList = v1UsersList.replace(" ", "").split(",")
 
     # # Invite Player with Role logic.
-    # v1MasterAdminPlayerEmailList = str(os.environ.get("v1MasterAdminPlayerEmails")).split(",")
+    # v1MasterAdminPlayerEmailList = str(os.environ.get("v1MasterAdminPlayerEmails"))
+
+    # if v1MasterAdminPlayerEmailList[-1] == ",":
+    #     v1MasterAdminPlayerEmailList = v1MasterAdminPlayerEmailList[:-1].replace(" ", "").split(",")
+    # else:
+    #     v1MasterAdminPlayerEmailList = v1MasterAdminPlayerEmailList.replace(" ", "").split(",")
 
     http = urllib3.PoolManager()
 

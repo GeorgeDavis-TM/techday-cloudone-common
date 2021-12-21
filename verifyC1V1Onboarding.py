@@ -17,8 +17,13 @@ def main(event, context):
 
     # Read AWS Lambda Environment variables into the Lambda runtime as variables.
     awsRegion = str(os.environ.get("awsRegion"))    
-    ssmParametersList = str(os.environ.get("ssmParametersList")).split(",")
+    ssmParametersList = str(os.environ.get("ssmParametersList"))
     ssmParameterValue = str(os.environ.get("ssmParameterValue"))
+
+    if ssmParametersList[-1] == ",":
+        ssmParametersList = ssmParametersList[:-1].replace(" ", "").split(",")
+    else:
+        ssmParametersList = ssmParametersList.replace(" ", "").split(",")
 
     # Creating an SSM Client to store values in the AWS SSM Parameter Store.
     ssmClient = boto3.client('ssm', region_name=awsRegion)
