@@ -64,7 +64,7 @@ functions:
       # # Invite Player with Role logic
       # v1MasterAdminPlayerEmails: george.davis@tclabs.ca,
   verifyC1Onboarding:
-    handler: verifyC1Onboarding.main
+    handler: verifyC1V1Onboarding.main
     description: Task 1 -  Cloud One Onboarding validation for Mission Control - C1Common-TechDay
     package:
       patterns:      
@@ -74,7 +74,7 @@ functions:
       ssmParametersList: /player/C1/c1OnboardingStatus,
       ssmParameterValue: Success
   verifyV1Onboarding:
-    handler: verifyV1Onboarding.main
+    handler: verifyC1V1Onboarding.main
     description: Task 1 -  Vision One Onboarding validation for Mission Control - C1Common-TechDay
     package:
       patterns:      
