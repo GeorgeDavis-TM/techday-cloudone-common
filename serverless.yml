@@ -58,7 +58,8 @@ functions:
       - '*v1Onboarding.py'
     environment:
       awsRegion: us-east-2
-      v1TrendRegion: United States      
+      v1ApiVersion: v3.0
+      v1TrendRegion: United States   
       v1AuthToken: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJjaWQiOiJmYjRmM2ExZC01ZTY1LTRiNjMtYWFiMS04MTU0OTA4N2EwMzEiLCJjcGlkIjoic3ZwIiwicHBpZCI6ImN1cyIsIml0IjoxNjM2MzQ5MDExLCJ1aWQiOiJnZW9yZ2UuZGF2aXNAdGNsYWJzLmNhIiwicGwiOiIiLCJldCI6MTY2Nzg4NTAxMX0.CcAsBZQFlQZhk82pfpOtBc1MqXm9FXd4y7RvEQPOGykcYVDLoZ-_Knig-_QGjw3Y52ypF_F-ornSnzqdu_X7lP8FT4C3fSgd9uqHchRD7evUw9JHC555d-PoUfHT4Kn5MuN0Djgq4rUxAIGKmRhpaQUIp8k48XaZI-zfB2tEsYoiOXzzGhiBuPIJSv7gtQGaTutyfrsCEBerMFfClsmWIR4xq5x_ZJMHCCRkLGXQZ-lZIhEnupXY1gLlZGQYhcbArApLfivxL1lfaxb7G5Gc8Ikxw7eTkhPKZzigZfhncbsgpxqOezh4dXGrCgzijD-eKQSF5sCp27gDeA8CRT57wCkQ0PCPqXBd7-_Ee0_HKJDeCA-hqxGk8flgNCpOj7UatPES9RwPZ487OEkzBkTjJ8N-oMcC9X_kVCKvTNKqZKeEvR_-6X5l7VicvE9VtmM1bXI0GgKRUtSCVdP46TecY7Su9DxzhElFbPZJEwjXOXICLkXqAbqiJuFuShd8vQujZY0fEfl4dmMcSkG7x-LseT7XLD_GkKRw9iNyY9Go5o7ACjrjAyHDtJkJ9qaKtvT4iaBng14ze9a80_lFhTH4oYSfhDGcIM8oIZxYZjHkZAaQSZqa8kfTctJ5HkpH58o0Z6Qxkx0LnbT5eYzdMdqXW0_bEXEkPf_S6JwlwsbqqX0
       v1UsersList: george.davis@tclabs.ca,
       # # Invite Player with Role logic

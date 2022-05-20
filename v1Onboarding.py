@@ -18,14 +18,14 @@ v1ApiEndpointBaseUrls = {
 }
 
 # Returns the Vision One region-based API Endpoint Base URL.
-def v1ApiEndpointBaseUrl(v1TrendRegion):
+def v1ApiEndpointBaseUrl(v1TrendRegion, v1ApiVersion):
 
-    return "https://" + v1ApiEndpointBaseUrls[v1TrendRegion] + "/beta/xdr/portal"
+    return "https://" + v1ApiEndpointBaseUrls[v1TrendRegion] + "/" + v1ApiVersion + "/xdr/portal"
 
 # Validates the Vision One Auth token passed to this function by listing roles in the Vision One account, returns True if success, otherwise False.
-def v1VerifyAuthToken(ssmClient, http, httpHeaders, v1TrendRegion):
+def v1VerifyAuthToken(ssmClient, http, httpHeaders, v1TrendRegion, v1ApiVersion):
 
-    r = http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion) + "/accounts/roles", headers=httpHeaders)
+    r = http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion, v1ApiVersion) + "/accounts/roles", headers=httpHeaders)
 
     v1ListAccountsResponse = json.loads(r.data)
     
@@ -47,7 +47,7 @@ def v1VerifyAuthToken(ssmClient, http, httpHeaders, v1TrendRegion):
     return False
 
 # Invites player to the Vision One account via email, assigns a Vision One Role based on the params passed to this function.
-def v1InvitePlayer(http, httpHeaders, v1TrendRegion, emailId, v1Role):
+def v1InvitePlayer(http, httpHeaders, v1TrendRegion, v1ApiVersion, emailId, v1Role):
 
     # HTTP Body for the Player Invitation to the Vision One account.
     httpBody = {
@@ -60,7 +60,7 @@ def v1InvitePlayer(http, httpHeaders, v1TrendRegion, emailId, v1Role):
         "role": str(v1Role)
     }
 
-    v1InvitePlayerResponse = json.loads(http.request('POST', v1ApiEndpointBaseUrl(v1TrendRegion) + "/accounts/" + urllib.parse.quote_plus(str(emailId)) , headers=httpHeaders, body=json.dumps(httpBody)).data)
+    v1InvitePlayerResponse = json.loads(http.request('POST', v1ApiEndpointBaseUrl(v1TrendRegion, v1ApiVersion) + "/accounts/" + urllib.parse.quote_plus(str(emailId)) , headers=httpHeaders, body=json.dumps(httpBody)).data)
 
     if "error" in v1InvitePlayerResponse:
 
@@ -78,9 +78,9 @@ def v1InvitePlayer(http, httpHeaders, v1TrendRegion, emailId, v1Role):
             raise Exception('Error: Invitation unsuccessful.')
 
 # Verify User Accounts exist in the Vision One account.
-def v1VerifyUserAccounts(http, httpHeaders, v1TrendRegion, v1UsersList):
+def v1VerifyUserAccounts(http, httpHeaders, v1TrendRegion, v1ApiVersion, v1UsersList):
 
-    v1UserAccountsResponse = json.loads(http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion)  + "/accounts", headers=httpHeaders).data)
+    v1UserAccountsResponse = json.loads(http.request('GET', v1ApiEndpointBaseUrl(v1TrendRegion, v1ApiVersion)  + "/accounts", headers=httpHeaders).data)
     
     v1UserAccountsDict = {}
     
@@ -121,7 +121,8 @@ def main(event, context):
 
     # Read AWS Lambda Environment variables into the Lambda runtime as variables.
     awsRegion = str(os.environ.get("awsRegion"))
-    v1TrendRegion = str(os.environ.get("v1TrendRegion"))    
+    v1TrendRegion = str(os.environ.get("v1TrendRegion"))
+    v1ApiVersion = str(os.environ.get("v1ApiVersion"))
     v1AuthToken = str(os.environ.get("v1AuthToken"))
     v1UsersList = str(os.environ.get("v1UsersList"))
 
@@ -164,7 +165,7 @@ def main(event, context):
             print("Vision One APIs are a Go!!!")
 
             # Stores global Trend V1 API Base URL as an SSM Parameter  "v1ApiBaseUrl".
-            setV1SsmParameter(ssmClient, "v1ApiBaseUrl", v1ApiEndpointBaseUrl(v1TrendRegion))
+            setV1SsmParameter(ssmClient, "v1ApiBaseUrl", v1ApiEndpointBaseUrl(v1TrendRegion, v1ApiVersion))
 
             # Stores global Trend V1 API Key as an SSM Parameter  "v1ApiKey".
             setV1SsmParameter(ssmClient, "v1ApiKey", v1AuthToken)
@@ -172,7 +173,7 @@ def main(event, context):
             # # Invite player with Master Administrator role onto the Vision One account.
             # for playerEmail in v1MasterAdminPlayerEmailList:
 
-            #     v1InvitePlayer(http, headers, v1TrendRegion, playerEmail, "Master Administrator")
+            #     v1InvitePlayer(http, headers, v1TrendRegion, v1ApiVersion, playerEmail, "Master Administrator")
 
             # Verify if all users exist in the Vision One account, raises exception if any one user fails.
             if v1VerifyUserAccounts(http, headers, v1TrendRegion, v1UsersList):
